@@ -31,6 +31,28 @@ public abstract class Stmt {
         }
     }
 
+    // if the memory size is bigger than one, we have
+    static class VariableDeclaration extends Stmt{
+
+        int memorySize;
+        String variableName;
+
+        public VariableDeclaration(String variableName){
+            this.variableName = variableName;
+            memorySize = 1;
+        }
+
+        public VariableDeclaration(String variableName, int memorySize){
+            this(variableName);
+            this.memorySize = memorySize;
+        }
+
+        @Override
+        <T> T accept(Visitor<T> visitor) {
+            return visitor.visitVariableDeclaration(this);
+        }
+    }
+
     static class IfStatement extends Stmt {
 
         // there are no booleans in C (we just check if something is zero or not)
@@ -90,5 +112,6 @@ public abstract class Stmt {
         T visitBlockStatement(BlockStatement blockStatement);
         T visitPrintStatement(PrintStatement printStatement);
         T visitWhileStatement(WhileStatement whileStatement);
+        T visitVariableDeclaration(VariableDeclaration variableDeclaration);
     }
 }

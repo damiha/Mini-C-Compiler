@@ -101,4 +101,19 @@ public abstract class Instr {
             return "Print";
         }
     }
+
+    static class Alloc extends Instr{
+
+        // memory size
+        int k;
+
+        public Alloc(int k){
+            this.k = k;
+        }
+
+        @Override
+        public String toString(){
+            return String.format("Alloc %d", k);
+        }
+    }
 }

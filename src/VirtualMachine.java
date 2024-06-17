@@ -60,6 +60,9 @@ public class VirtualMachine {
                 stackPointer--;
             }
         }
+        if(instruction instanceof Instr.Alloc){
+            stackPointer += ((Instr.Alloc) instruction).k;
+        }
         // unconditional jump
         if(instruction instanceof Instr.Jump){
             programCounter = jumpTable.get(((Instr.Jump) instruction).jumpLabel);
@@ -82,8 +85,9 @@ public class VirtualMachine {
             stack[stackPointer] = ((Instr.LoadC)instruction).q;
         }
         else if(instruction instanceof  Instr.Load){
-            stackPointer++;
-            Integer addressToLoadFrom = (Integer)stack[stackPointer - 1];
+
+            // consumes the address to load from
+            Integer addressToLoadFrom = (Integer)stack[stackPointer];
             stack[stackPointer] = stack[addressToLoadFrom];
         }
         else if(instruction instanceof Instr.Add){

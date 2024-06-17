@@ -201,4 +201,21 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
         return code;
     }
+
+    @Override
+    public Code visitVariableDeclaration(Stmt.VariableDeclaration variableDeclaration) {
+
+        int k = variableDeclaration.memorySize;
+
+        // n only gets used when new variables are declared
+
+        // variable is saved (starting from address n)
+        environment.define(variableDeclaration.variableName, n);
+        n += k;
+
+        Code code = new Code();
+        code.addInstruction(new Instr.Alloc(k));
+
+        return code;
+    }
 }

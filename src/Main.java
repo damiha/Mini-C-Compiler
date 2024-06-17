@@ -25,14 +25,20 @@ public class Main {
         );
         */
 
-        // x = 0
-        Stmt varInit = new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr("x"), new Expr.Literal(0)));
+        // int x;
+        Stmt varDecl = new Stmt.VariableDeclaration("x", 1);
+        Stmt varDecl2 = new Stmt.VariableDeclaration("y", 1);
 
+        // x = 1, y = 0
+        Stmt varInit = new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr("x"), new Expr.Literal(1)));
+        Stmt varInit2 = new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr("y"), new Expr.Literal(0)));
 
         // print x
         // x++;
+        // y = y + x;
         Stmt body = new Stmt.BlockStatement(
-                List.of(new Stmt.PrintStatement(new Expr.VariableExpr("x")),
+                List.of(new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr("y"), new Expr.BinOp(new Expr.VariableExpr("y"), new Expr.VariableExpr("x"), BinaryOperator.PLUS))),
+                        new Stmt.PrintStatement(new Expr.VariableExpr("y")),
                         new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr("x"), new Expr.BinOp(new Expr.VariableExpr("x"), new Expr.Literal(1), BinaryOperator.PLUS)))
                         )
         );
@@ -43,10 +49,7 @@ public class Main {
 
         CodeGenerator codeGenerator = new CodeGenerator();
 
-        // location = 100
-        codeGenerator.environment.define("x", 100);
-
-        Code code = codeGenerator.generateCode(List.of(varInit, whileLoop));
+        Code code = codeGenerator.generateCode(List.of(varDecl, varDecl2, varInit, varInit2, whileLoop));
 
         System.out.println(code);
 
