@@ -98,10 +98,19 @@ public class VirtualMachine {
         else if(instruction instanceof Instr.LessOrEqual){
             executeBinaryOperation((o1, o2) -> {
                 if(o1 instanceof Integer && o2 instanceof Integer){
-                    return ((Integer)o1) < ((Integer)o2);
+                    return ((Integer)o1) <= ((Integer)o2) ? 1 : 0;
                 }
 
                 throw new RuntimeException("LessOrEqual doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.Equal){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return ((Integer) o1).equals((Integer) o2) ? 1 : 0;
+                }
+
+                throw new RuntimeException("Equal doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
             });
         }
         else if(instruction instanceof Instr.Store){

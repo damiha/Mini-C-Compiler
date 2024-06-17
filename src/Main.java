@@ -37,7 +37,7 @@ public class Main {
                         )
         );
 
-        // while x < 5
+        // while x <= 5
         Stmt whileLoop = new Stmt.WhileStatement(new Expr.BinOp(new Expr.VariableExpr("x"), new Expr.Literal(5), BinaryOperator.LESS_EQUAL),
                 body);
 
@@ -62,7 +62,7 @@ public class Main {
         };
         */
 
-        // vm.execute(code);
+        vm.execute(code);
 
         //System.out.println(vm);
     }
