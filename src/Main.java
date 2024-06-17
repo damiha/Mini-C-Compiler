@@ -3,6 +3,7 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
 
+        /*
         Stmt stmt1 = new Stmt.ExpressionStatement(
                 new Expr.AssignExpr(
                 new Expr.VariableExpr("x"),
@@ -22,16 +23,20 @@ public class Main {
                         )
                 )
         );
+        */
+
+        Stmt stmt1 = new Stmt.PrintStatement(new Expr.BinOp(new Expr.Literal(5), new Expr.Literal(7), BinaryOperator.PLUS));
+        Stmt stmt2 = new Stmt.PrintStatement(new Expr.BinOp(new Expr.Literal(13), new Expr.Literal(7), BinaryOperator.PLUS));
+        Stmt stmt3 = new Stmt.PrintStatement(new Expr.Literal("Hello World!"));
+
+        Stmt ifStatement = new Stmt.IfStatement(new Expr.Literal(1), stmt1, stmt2);
 
         CodeGenerator codeGenerator = new CodeGenerator();
         codeGenerator.environment.define("x", 100);
 
-        Instr[] code = codeGenerator.generateCode(List.of(stmt1, stmt2));
+        Code code = codeGenerator.generateCode(List.of(ifStatement, stmt3));
 
-        for(Instr instr : code){
-            System.out.println(instr);
-        }
-
+        //System.out.println(code);
 
         VirtualMachine vm = new VirtualMachine();
 
@@ -47,6 +52,6 @@ public class Main {
 
         vm.execute(code);
 
-        System.out.println(vm);
+        //System.out.println(vm);
     }
 }

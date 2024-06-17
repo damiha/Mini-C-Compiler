@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class CodeGenerator implements Expr.Visitor<List<Instr>>, Stmt.Visitor<List<Instr>>{
+public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
     Environment environment;
 
@@ -14,37 +14,37 @@ public class CodeGenerator implements Expr.Visitor<List<Instr>>, Stmt.Visitor<Li
     }
 
     // receives an abstract syntax tree
-    public Instr[] generateCode(List<Stmt> statements){
+    public Code generateCode(List<Stmt> statements){
 
-        List<Instr> instructions = new ArrayList<>();
+        Code code = new Code();
 
         for(Stmt statement : statements){
-            instructions.addAll(code(statement));
+            code.addCode(code(statement));
         }
 
-        instructions.add(new Instr.Halt());
+        code.addInstruction(new Instr.Halt());
 
-        return instructions.toArray(new Instr[0]);
+        return code;
     }
 
-    public List<Instr> code(Stmt statement){
+    public Code code(Stmt statement){
         return statement.accept(this);
     }
 
-    public List<Instr> codeR(Expr expr){
+    public Code codeR(Expr expr){
         return expr.accept(this, GenerationMode.R);
     }
 
-    public List<Instr> codeL(Expr expr){
+    public Code codeL(Expr expr){
         return expr.accept(this, GenerationMode.L);
     }
 
     @Override
-    public List<Instr> visitLiteral(Expr.Literal literal, GenerationMode mode) {
+    public Code visitLiteral(Expr.Literal literal, GenerationMode mode) {
 
         checkNoLValue(mode, "Literal has no l-value.");
 
-        return new ArrayList<Instr>(List.of(new Instr.LoadC(literal.value)));
+        return new Code(List.of(new Instr.LoadC(literal.value)));
     }
 
     private void checkNoLValue(GenerationMode mode, String message){
@@ -54,18 +54,18 @@ public class CodeGenerator implements Expr.Visitor<List<Instr>>, Stmt.Visitor<Li
     }
 
     @Override
-    public List<Instr> visitBinary(Expr.BinOp binOp, GenerationMode mode) {
+    public Code visitBinary(Expr.BinOp binOp, GenerationMode mode) {
 
         checkNoLValue(mode, "Binary operation has no l-value");
 
-        List<Instr> left = codeR(binOp.left);
-        List<Instr> right = codeR(binOp.right);
+        Code left = codeR(binOp.left);
+        Code right = codeR(binOp.right);
 
-        left.addAll(right);
+        left.addCode(right);
 
         switch(binOp.operator){
             case BinaryOperator.PLUS:
-                left.add(new Instr.Add());
+                left.addInstruction(new Instr.Add());
                 break;
             default:
                 throw new RuntimeException("Unknown operator");
@@ -75,55 +75,107 @@ public class CodeGenerator implements Expr.Visitor<List<Instr>>, Stmt.Visitor<Li
     }
 
     @Override
-    public List<Instr> visitVariableExpr(Expr.VariableExpr variableExpr, GenerationMode mode) {
+    public Code visitVariableExpr(Expr.VariableExpr variableExpr, GenerationMode mode) {
 
         if(mode == GenerationMode.L){
-            return new ArrayList<>(List.of(new Instr.LoadC(environment.getAddress(variableExpr.varName))));
+            return new Code(List.of(new Instr.LoadC(environment.getAddress(variableExpr.varName))));
         }
         else{
-            return new ArrayList<>(List.of(new Instr.LoadC(environment.getAddress(variableExpr.varName)), new Instr.Load()));
+            return new Code(List.of(new Instr.LoadC(environment.getAddress(variableExpr.varName)), new Instr.Load()));
         }
     }
 
     @Override
-    public List<Instr> visitAssignExpr(Expr.AssignExpr assignExpr, GenerationMode mode) {
+    public Code visitAssignExpr(Expr.AssignExpr assignExpr, GenerationMode mode) {
 
         checkNoLValue(mode, "assignment expression has no l-value");
 
-        List<Instr> value = codeR(assignExpr.value);
-        List<Instr> target = codeL(assignExpr.target);
+        Code value = codeR(assignExpr.value);
+        Code target = codeL(assignExpr.target);
 
-        value.addAll(target);
-        value.add(new Instr.Store());
+        value.addCode(target);
+        value.addInstruction(new Instr.Store());
 
         return value;
     }
 
     @Override
-    public List<Instr> visitExpressionStatement(Stmt.ExpressionStatement e) {
+    public Code visitExpressionStatement(Stmt.ExpressionStatement e) {
 
-        List<Instr> exprCode = codeR(e.expr);
-        exprCode.add(new Instr.Pop());
+        Code exprCode = codeR(e.expr);
+        exprCode.addInstruction(new Instr.Pop());
 
         return exprCode;
     }
 
     @Override
-    public List<Instr> visitIfStatement(Stmt.IfStatement ifStatement) {
+    public Code visitIfStatement(Stmt.IfStatement ifStatement) {
 
-        // TODO
+        if(ifStatement.elseBranch != null){
+            if(ifStatement.ifBranch == null){
+                throw new RuntimeException("Needs to have an if branch to have an else branch");
+            }
 
-        return List.of();
+            return translateIfElse(ifStatement);
+        }
+
+        return translateIfWithoutElse(ifStatement);
+    }
+
+    private Code translateIfWithoutElse(Stmt.IfStatement ifStatement){
+        Code code = codeR(ifStatement.condition);
+
+        Instr.JumpZ jumpOverIfBlock = new Instr.JumpZ(-1);
+        code.addInstruction(jumpOverIfBlock);
+
+        Code ifCode = code(ifStatement.ifBranch);
+        code.addCode(ifCode);
+
+        // now we can create the jump label and set it
+        int jumpLabel = code.addJumpLabelAtEnd();
+        jumpOverIfBlock.jumpLabel = jumpLabel;
+
+        return code;
+    }
+
+    private Code translateIfElse(Stmt.IfStatement ifStatement){
+
+        Code code = codeR(ifStatement.condition);
+
+        Instr.JumpZ jumpToElse = new Instr.JumpZ(-1);
+        code.addInstruction(jumpToElse);
+
+        Code ifCode = code(ifStatement.ifBranch);
+        code.addCode(ifCode);
+
+        Instr.Jump jumpOverElse = new Instr.Jump(-1);
+        code.addInstruction(jumpOverElse);
+
+        jumpToElse.jumpLabel = code.addJumpLabelAtEnd();
+
+        code.addCode(code(ifStatement.elseBranch));
+        jumpOverElse.jumpLabel = code.addJumpLabelAtEnd();
+
+        return code;
     }
 
     @Override
-    public List<Instr> visitBlockStatement(Stmt.BlockStatement blockStatement) {
-        List<Instr> instructions = new ArrayList<>();
+    public Code visitBlockStatement(Stmt.BlockStatement blockStatement) {
+        Code code = new Code();
 
         for(Stmt instruction : blockStatement.statements){
-            instructions.addAll(code(instruction));
+            code.addCode(code(instruction));
         }
 
-        return instructions;
+        return code;
+    }
+
+    @Override
+    public Code visitPrintStatement(Stmt.PrintStatement printStatement) {
+
+        Code code = codeR(printStatement.expr);
+        code.addInstruction(new Instr.Print());
+
+        return code;
     }
 }

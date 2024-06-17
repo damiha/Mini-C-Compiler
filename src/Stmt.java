@@ -32,6 +32,8 @@ public abstract class Stmt {
     }
 
     static class IfStatement extends Stmt {
+
+        // there are no booleans in C (we just check if something is zero or not)
         Expr condition;
 
         // if there is no else branch, else branch = null
@@ -50,9 +52,24 @@ public abstract class Stmt {
         }
     }
 
+    // we bake print statements into the language, so we can test
+    static class PrintStatement extends Stmt{
+        Expr expr;
+
+        public PrintStatement(Expr expr){
+            this.expr = expr;
+        }
+
+        @Override
+        <T> T accept(Visitor<T> visitor) {
+            return visitor.visitPrintStatement(this);
+        }
+    }
+
     public interface Visitor<T>{
         T visitExpressionStatement(ExpressionStatement e);
         T visitIfStatement(IfStatement ifStatement);
         T visitBlockStatement(BlockStatement blockStatement);
+        T visitPrintStatement(PrintStatement printStatement);
     }
 }
