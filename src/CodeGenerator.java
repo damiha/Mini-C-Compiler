@@ -1,12 +1,16 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class CodeGenerator implements Expr.Visitor<List<Instr>> {
+public class CodeGenerator implements Expr.Visitor<List<Instr>>, Stmt.Visitor<List<Instr>>{
 
     Environment environment;
 
+    // points to first free cell (stack allocation)
+    int n;
+
     public CodeGenerator(){
         environment = new Environment();
+        n = 0;
     }
 
     // receives an abstract syntax tree
@@ -24,14 +28,7 @@ public class CodeGenerator implements Expr.Visitor<List<Instr>> {
     }
 
     public List<Instr> code(Stmt statement){
-
-        if(statement instanceof Stmt.ExpressionStatement){
-            List<Instr> exprCode = codeR(((Stmt.ExpressionStatement) statement).expr);
-            exprCode.add(new Instr.Pop());
-
-            return exprCode;
-        }
-        return null;
+        return statement.accept(this);
     }
 
     public List<Instr> codeR(Expr expr){
@@ -100,5 +97,33 @@ public class CodeGenerator implements Expr.Visitor<List<Instr>> {
         value.add(new Instr.Store());
 
         return value;
+    }
+
+    @Override
+    public List<Instr> visitExpressionStatement(Stmt.ExpressionStatement e) {
+
+        List<Instr> exprCode = codeR(e.expr);
+        exprCode.add(new Instr.Pop());
+
+        return exprCode;
+    }
+
+    @Override
+    public List<Instr> visitIfStatement(Stmt.IfStatement ifStatement) {
+
+        // TODO
+
+        return List.of();
+    }
+
+    @Override
+    public List<Instr> visitBlockStatement(Stmt.BlockStatement blockStatement) {
+        List<Instr> instructions = new ArrayList<>();
+
+        for(Stmt instruction : blockStatement.statements){
+            instructions.addAll(code(instruction));
+        }
+
+        return instructions;
     }
 }
