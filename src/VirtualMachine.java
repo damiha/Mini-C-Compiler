@@ -1,5 +1,6 @@
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.Map;
 
 public class VirtualMachine {
 
@@ -8,6 +9,7 @@ public class VirtualMachine {
 
     Object[] stack;
     Instr[] codeStore;
+    Map<Integer, Integer> jumpTable;
 
     Instr instructionRegister;
 
@@ -16,32 +18,56 @@ public class VirtualMachine {
 
     boolean isRunning;
 
+    boolean debugPrintActivated = false;
+
     public VirtualMachine(){
         stack = new Object[stackSize];
         codeStore = new Instr[instructionSize];
     }
 
-    private void init(Instr[] code){
-        System.arraycopy(code, 0, codeStore, 0, code.length);
+    private void init(Code code){
+
+        jumpTable = code.jumpTable;
+        Instr[] instructionsArray = code.instructions.toArray(new Instr[0]);
+
+        System.arraycopy(instructionsArray, 0, codeStore, 0, instructionsArray.length);
         stackPointer = 0;
         programCounter = 0;
         isRunning = true;
     }
 
-    public void execute(Instr[] code){
+    public void execute(Code code){
 
         init(code);
 
         while(isRunning){
             instructionRegister = codeStore[programCounter++];
             execute(instructionRegister);
-            System.out.println(this);
+
+            if(debugPrintActivated) {
+                System.out.println(this);
+            }
         }
     }
 
     private void execute(Instr instruction){
         if(instruction instanceof Instr.Halt){
             isRunning = false;
+        }
+        if(instruction instanceof Instr.JumpZ){
+            if((Integer)stack[stackPointer] == 0){
+                programCounter = jumpTable.get(((Instr.JumpZ) instruction).jumpLabel);
+                stackPointer--;
+            }
+        }
+        // unconditional jump
+        if(instruction instanceof Instr.Jump){
+            programCounter = jumpTable.get(((Instr.Jump) instruction).jumpLabel);
+            stackPointer--;
+        }
+        if(instruction instanceof Instr.Print){
+            System.out.println(stack[stackPointer]);
+            stackPointer--;
         }
         if(instruction instanceof Instr.Pop){
             if(stackPointer > 0){
@@ -67,6 +93,24 @@ public class VirtualMachine {
                 }
 
                 throw new RuntimeException("Add doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.LessOrEqual){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return ((Integer)o1) <= ((Integer)o2) ? 1 : 0;
+                }
+
+                throw new RuntimeException("LessOrEqual doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.Equal){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return ((Integer) o1).equals((Integer) o2) ? 1 : 0;
+                }
+
+                throw new RuntimeException("Equal doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
             });
         }
         else if(instruction instanceof Instr.Store){

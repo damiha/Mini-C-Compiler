@@ -32,6 +32,19 @@ public abstract class Instr {
             return "Add";
         }
     }
+
+    static class LessOrEqual extends Instr{
+        @Override
+        public String toString(){
+            return "LessOrEqual";
+        }
+    }
+    static class Equal extends Instr{
+        @Override
+        public String toString(){
+            return "Equal";
+        }
+    }
     static class Mul extends Instr{
     }
     static class Store extends Instr{
@@ -51,6 +64,41 @@ public abstract class Instr {
         @Override
         public String toString() {
             return "Load";
+        }
+    }
+
+    static class JumpZ extends Instr{
+
+        int jumpLabel;
+
+        public JumpZ(int jumpLabel){
+            this.jumpLabel = jumpLabel;
+        }
+
+        @Override
+        public String toString(){
+            return String.format("JumpZ %d", jumpLabel);
+        }
+    }
+
+    // unconditional jump
+    static class Jump extends Instr{
+        int jumpLabel;
+
+        public Jump(int jumpLabel){
+            this.jumpLabel = jumpLabel;
+        }
+
+        public String toString(){
+            return String.format("Jump %d", jumpLabel);
+        }
+    }
+
+    static class Print extends Instr{
+
+        @Override
+        public String toString(){
+            return "Print";
         }
     }
 }
