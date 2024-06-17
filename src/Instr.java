@@ -32,6 +32,13 @@ public abstract class Instr {
             return "Add";
         }
     }
+
+    static class LessOrEqual extends Instr{
+        @Override
+        public String toString(){
+            return "LessOrEqual";
+        }
+    }
     static class Mul extends Instr{
     }
     static class Store extends Instr{

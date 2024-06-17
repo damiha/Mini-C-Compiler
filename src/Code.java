@@ -44,8 +44,12 @@ public class Code {
             // replace old jump label in code that is appended
             // only replace jump labels which match with old ones
             for(Instr instr : codeAfter.instructions){
+
                 if(instr instanceof Instr.JumpZ && ((Instr.JumpZ) instr).jumpLabel == jumpLabel){
                     ((Instr.JumpZ) instr).jumpLabel = newJumpLabel;
+                }
+                else if (instr instanceof Instr.Jump && ((Instr.Jump) instr).jumpLabel == jumpLabel){
+                    ((Instr.Jump) instr).jumpLabel = newJumpLabel;
                 }
             }
 

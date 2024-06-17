@@ -67,6 +67,9 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
             case BinaryOperator.PLUS:
                 left.addInstruction(new Instr.Add());
                 break;
+            case BinaryOperator.LESS_EQUAL:
+                left.addInstruction(new Instr.LessOrEqual());
+                break;
             default:
                 throw new RuntimeException("Unknown operator");
         }
@@ -175,6 +178,22 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
         Code code = codeR(printStatement.expr);
         code.addInstruction(new Instr.Print());
+
+        return code;
+    }
+
+    @Override
+    public Code visitWhileStatement(Stmt.WhileStatement whileStatement) {
+
+        Code code = new Code();
+        int jumpLabelBeforeCondition = code.addJumpLabelAtEnd();
+
+        code.addCode(codeR(whileStatement.condition));
+        Instr.JumpZ jumpOverBody = new Instr.JumpZ(-1);
+
+        code.addCode(code(whileStatement.body));
+        code.addInstruction(new Instr.Jump(jumpLabelBeforeCondition));
+        jumpOverBody.jumpLabel = code.addJumpLabelAtEnd();
 
         return code;
     }

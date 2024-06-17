@@ -25,18 +25,30 @@ public class Main {
         );
         */
 
-        Stmt stmt1 = new Stmt.PrintStatement(new Expr.BinOp(new Expr.Literal(5), new Expr.Literal(7), BinaryOperator.PLUS));
-        Stmt stmt2 = new Stmt.PrintStatement(new Expr.BinOp(new Expr.Literal(13), new Expr.Literal(7), BinaryOperator.PLUS));
-        Stmt stmt3 = new Stmt.PrintStatement(new Expr.Literal("Hello World!"));
+        // x = 0
+        Stmt varInit = new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr("x"), new Expr.Literal(0)));
 
-        Stmt ifStatement = new Stmt.IfStatement(new Expr.Literal(1), stmt1, stmt2);
+
+        // print x
+        // x++;
+        Stmt body = new Stmt.BlockStatement(
+                List.of(new Stmt.PrintStatement(new Expr.VariableExpr("x")),
+                        new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr("x"), new Expr.BinOp(new Expr.VariableExpr("x"), new Expr.Literal(1), BinaryOperator.PLUS)))
+                        )
+        );
+
+        // while x < 5
+        Stmt whileLoop = new Stmt.WhileStatement(new Expr.BinOp(new Expr.VariableExpr("x"), new Expr.Literal(5), BinaryOperator.LESS_EQUAL),
+                body);
 
         CodeGenerator codeGenerator = new CodeGenerator();
+
+        // location = 100
         codeGenerator.environment.define("x", 100);
 
-        Code code = codeGenerator.generateCode(List.of(ifStatement, stmt3));
+        Code code = codeGenerator.generateCode(List.of(varInit, whileLoop));
 
-        //System.out.println(code);
+        System.out.println(code);
 
         VirtualMachine vm = new VirtualMachine();
 
@@ -50,7 +62,7 @@ public class Main {
         };
         */
 
-        vm.execute(code);
+        // vm.execute(code);
 
         //System.out.println(vm);
     }

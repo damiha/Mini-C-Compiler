@@ -52,6 +52,24 @@ public abstract class Stmt {
         }
     }
 
+    static class WhileStatement extends Stmt{
+
+        Expr condition;
+
+        Stmt body;
+
+        public WhileStatement(Expr condition, Stmt body){
+            this.condition = condition;
+            this.body = body;
+        }
+
+
+        @Override
+        <T> T accept(Visitor<T> visitor) {
+            return visitor.visitWhileStatement(this);
+        }
+    }
+
     // we bake print statements into the language, so we can test
     static class PrintStatement extends Stmt{
         Expr expr;
@@ -71,5 +89,6 @@ public abstract class Stmt {
         T visitIfStatement(IfStatement ifStatement);
         T visitBlockStatement(BlockStatement blockStatement);
         T visitPrintStatement(PrintStatement printStatement);
+        T visitWhileStatement(WhileStatement whileStatement);
     }
 }

@@ -1,3 +1,3 @@
 public enum BinaryOperator {
-        PLUS, MINUS, DIV, MUL, EQUAL, UNEQUAL
+        PLUS, MINUS, DIV, MUL, EQUAL, UNEQUAL, LESS_EQUAL
 }
