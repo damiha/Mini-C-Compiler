@@ -14,6 +14,7 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
     static {
         dataTypeToSize.put("int", 1);
+        dataTypeToSize.put("int*", 1);
     }
 
     public CodeGenerator(){
@@ -123,22 +124,41 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
     }
 
     @Override
+    public Code visitAddressExpr(Expr.AddressExpr expr, GenerationMode mode) {
+
+        checkNoLValue(mode, "address expression (&) has no l -value");
+
+        // gives the l code (the address) of the expression
+        return codeL(expr.expr);
+    }
+
+    @Override
+    public Code visitDeRefExpr(Expr.DeRefExpr expr, GenerationMode mode) {
+
+        // r value is easy, just load the l value
+        // what about l value of a *p ?
+
+        // normally the l-value of the pointer is its address (where the pointer is stored)
+        // with * we dereference it and say, give me the l-value of what the pointer is pointing to
+        // the pointer value is the
+        Code code = codeR(expr.expr);
+
+        if(mode == GenerationMode.R){
+            code.addInstruction(new Instr.Load());
+        }
+
+        return code;
+    }
+
+    @Override
     public Code visitAssignExpr(Expr.AssignExpr assignExpr, GenerationMode mode) {
 
         checkNoLValue(mode, "assignment expression has no l-value");
 
         Code value = codeR(assignExpr.value);
 
-        Code target;
-        if(assignExpr.target != null) {
-            target = codeL(assignExpr.target);
-        }
-        else{
-            // is an array access expression
-            target = codeL(assignExpr.arrayTarget);
-        }
-
-        value.addCode(target);
+        // if the target has no l-value, the assignment code generation fails
+        value.addCode(codeL(assignExpr.target));
         value.addInstruction(new Instr.Store());
 
         return value;

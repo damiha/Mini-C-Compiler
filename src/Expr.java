@@ -31,25 +31,47 @@ public abstract class Expr {
     }
 
     static class AssignExpr extends Expr{
-        final VariableExpr target;
+        final Expr target;
         final Expr value;
-        final ArrayAccessExpr arrayTarget;
 
-        public AssignExpr(VariableExpr target, Expr value){
+        public AssignExpr(Expr target, Expr value){
             this.target = target;
             this.value = value;
-            arrayTarget = null;
-        }
-
-        public AssignExpr(ArrayAccessExpr arrayAccessExpr, Expr value){
-            this.arrayTarget = arrayAccessExpr;
-            this.value = value;
-            target = null;
         }
 
         @Override
         <T> T accept(Visitor<T> visitor, GenerationMode mode) {
             return visitor.visitAssignExpr(this, mode);
+        }
+    }
+
+    // C's & operator
+    static class AddressExpr extends Expr{
+        final Expr expr;
+
+        public AddressExpr(Expr expr){
+            this.expr = expr;
+        }
+
+
+        @Override
+        <T> T accept(Visitor<T> visitor, GenerationMode mode) {
+            return visitor.visitAddressExpr(this, mode);
+        }
+    }
+
+    // C's * operator
+    static class DeRefExpr extends Expr{
+        final Expr expr;
+
+        public DeRefExpr(Expr expr){
+            this.expr = expr;
+        }
+
+
+        @Override
+        <T> T accept(Visitor<T> visitor, GenerationMode mode) {
+            return visitor.visitDeRefExpr(this, mode);
         }
     }
 
@@ -88,5 +110,7 @@ public abstract class Expr {
         T visitAssignExpr(AssignExpr assignExpr, GenerationMode mode);
         T visitVariableExpr(VariableExpr variableExpr, GenerationMode mode);
         T visitArrayAccessExpr(ArrayAccessExpr arrayAccessExpr, GenerationMode mode);
+        T visitAddressExpr(AddressExpr expr, GenerationMode mode);
+        T visitDeRefExpr(DeRefExpr expr, GenerationMode mode);
     }
 }
