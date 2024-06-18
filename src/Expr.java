@@ -1,3 +1,5 @@
+import java.util.List;
+
 public abstract class Expr {
 
     abstract <T> T accept(Visitor<T> visitor, GenerationMode mode);
@@ -88,6 +90,23 @@ public abstract class Expr {
         }
     }
 
+    static class CallExpr extends Expr{
+
+        String functionName;
+        List<Expr> parameterExpressions;
+
+        public CallExpr(String functionName, List<Expr> parameterExpressions){
+            this.functionName = functionName;
+            this.parameterExpressions = parameterExpressions;
+        }
+
+
+        @Override
+        <T> T accept(Visitor<T> visitor, GenerationMode mode) {
+            return visitor.visitCallExpr(this, mode);
+        }
+    }
+
     static class ArrayAccessExpr extends Expr{
 
         VariableExpr arrayExpr;
@@ -112,5 +131,6 @@ public abstract class Expr {
         T visitArrayAccessExpr(ArrayAccessExpr arrayAccessExpr, GenerationMode mode);
         T visitAddressExpr(AddressExpr expr, GenerationMode mode);
         T visitDeRefExpr(DeRefExpr expr, GenerationMode mode);
+        T visitCallExpr(CallExpr expr, GenerationMode mode);
     }
 }

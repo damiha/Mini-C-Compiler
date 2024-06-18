@@ -5,6 +5,54 @@ public abstract class Instr {
             return "Halt";
         }
     }
+
+    // TODO: add VM interpretation (we don't have extreme pointer yet)
+    static class Enter extends Instr{
+
+        @Override
+        public String toString(){
+            return "Enter";
+        }
+    }
+
+    static class Mark extends Instr{
+
+        @Override
+        public String toString(){
+            return "Mark";
+        }
+    }
+
+    static class Call extends Instr{
+
+        @Override
+        public String toString(){
+            return "Call";
+        }
+    }
+
+    static class Return extends Instr{
+
+        @Override
+        public String toString(){
+            return "Return";
+        }
+    }
+
+    static class Slide extends Instr{
+
+        int m;
+
+        public Slide(int m){
+            this.m = m;
+        }
+
+        @Override
+        public String toString(){
+            return "Slide " + m;
+        }
+    }
+
     static class LoadC extends Instr{
         // object to be loaded into the stack
         Object q;

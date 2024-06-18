@@ -5,14 +5,25 @@ public class Environment {
 
     Map<String, Integer> nameToAddress;
     Map<String, String> nameToType;
+    Environment parent;
 
     public Environment(){
         nameToAddress = new HashMap<>();
         nameToType = new HashMap<>();
     }
 
+    public Environment(Environment parent){
+        this();
+        this.parent = parent;
+    }
+
     public int getAddress(String varName){
-        return nameToAddress.get(varName);
+
+        if(nameToAddress.containsKey(varName)){
+            return nameToAddress.get(varName);
+        }
+        // TODO
+        throw new RuntimeException(String.format("Variable %s not found.", varName));
     }
 
     public String getType(String varName){

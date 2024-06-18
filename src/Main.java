@@ -3,33 +3,30 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
 
-        Stmt stmt1 = new Stmt.VariableDeclaration("int", "x");
-        Stmt stmt2 = new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr("x"), new Expr.Literal(5)));
-        Stmt stmt3 = new Stmt.PrintStatement(new Expr.VariableExpr("x"));
+        Stmt.FunctionDeclaration addDef = new Stmt.FunctionDeclaration("int", "add",
+                List.of(
+                        new Stmt.VariableDeclaration("int", "x"),
+                        new Stmt.VariableDeclaration("int", "y")
+                ), new Stmt.BlockStatement(
+                        List.of(
+                                new Stmt.PrintStatement(new Expr.BinOp(new Expr.Literal(5), new Expr.Literal(42), BinaryOperator.PLUS)),
+                                new Stmt.ReturnStatement(new Expr.Literal(55))
+                                )
+                        )
+        );
 
-        Stmt stmt4 = new Stmt.VariableDeclaration("int*", "xp");
-        Stmt stmt5 = new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr("xp"), new Expr.AddressExpr(new Expr.VariableExpr("x"))));
+        Stmt.FunctionDeclaration mainDef = new Stmt.FunctionDeclaration("int", "main",
+                List.of(), new Stmt.BlockStatement(
+                List.of(new Stmt.PrintStatement(new Expr.CallExpr("add", List.of(new Expr.Literal(5), new Expr.Literal(10))))
+        )));
 
-        // print address that pointer points to
-        Stmt stmt6 = new Stmt.PrintStatement(new Expr.VariableExpr("xp"));
-        Stmt stmt7 = new Stmt.PrintStatement(new Expr.DeRefExpr(new Expr.VariableExpr("xp")));
-        Stmt stmt8 = new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.DeRefExpr(new Expr.VariableExpr("xp")), new Expr.Literal(10)));
-        Stmt stmt9 = new Stmt.PrintStatement(new Expr.VariableExpr("x"));
-
-        // can you modify an array
-        Stmt stmt10 = new Stmt.VariableDeclaration("int[]", "y", 5);
-        Stmt stmt11 = new Stmt.ExpressionStatement(
-                new Expr.AssignExpr(new Expr.VariableExpr("xp"),
-                        new Expr.AddressExpr(new Expr.ArrayAccessExpr(new Expr.VariableExpr("y"), new Expr.Literal(3)))));
-
-        Stmt stmt12 = new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.DeRefExpr(new Expr.VariableExpr("xp")), new Expr.Literal(22)));
-        Stmt stmt13 = new Stmt.PrintStatement(new Expr.ArrayAccessExpr(new Expr.VariableExpr("y"), new Expr.Literal(3)));
+        Program program = new Program(List.of(), List.of(mainDef, addDef));
 
         CodeGenerator codeGenerator = new CodeGenerator();
 
-        Code code = codeGenerator.generateCode(List.of(stmt1, stmt2, stmt3, stmt4, stmt5, stmt6, stmt7, stmt8, stmt9, stmt10, stmt11, stmt12, stmt13));
+        Code code = codeGenerator.generateCode(program);
 
-        System.out.println(code);
+        //System.out.println(code);
 
         VirtualMachine vm = new VirtualMachine();
 

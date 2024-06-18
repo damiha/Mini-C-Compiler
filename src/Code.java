@@ -8,9 +8,12 @@ public class Code {
     List<Instr> instructions;
     Map<Integer, Integer> jumpTable;
 
+    Map<String, Integer> functionNamesToCodeStart;
+
     public Code(){
         instructions = new ArrayList<>();
         jumpTable = new HashMap<>();
+        functionNamesToCodeStart = new HashMap<>();
     }
 
     public Code(List<Instr> instructions){
@@ -28,6 +31,11 @@ public class Code {
         return jumpLabel;
     }
 
+    public void registerFunction(String functionName){
+        int indexOfEnd = instructions.size();
+
+        functionNamesToCodeStart.put(functionName, indexOfEnd);
+    }
 
     public void addCode(Code codeAfter){
 
@@ -56,6 +64,16 @@ public class Code {
             jumpTable.put(newJumpLabel, newDestination);
         }
 
+        // merge function jump tables
+        for(String functionName : codeAfter.functionNamesToCodeStart.keySet()){
+            if(functionNamesToCodeStart.containsKey(functionName)){
+                throw new RuntimeException(String.format("Function '%s' is declared multiple times.", functionName));
+            }
+
+            int oldFunctionStart = codeAfter.functionNamesToCodeStart.get(functionName);
+            functionNamesToCodeStart.put(functionName, offset + oldFunctionStart);
+        }
+
         instructions.addAll(codeAfter.instructions);
     }
 
@@ -76,6 +94,16 @@ public class Code {
             String stringRep = instructionRepresentations.get(jumpTable.get(i));
             String newRep = String.format("%d: %s", i, stringRep);
             instructionRepresentations.set(jumpTable.get(i), newRep);
+        }
+
+        // add the function labels
+        for(String functionName : functionNamesToCodeStart.keySet()){
+
+            int index = functionNamesToCodeStart.get(functionName);
+
+            String stringRep = instructionRepresentations.get(index);
+            String newRep = String.format("%s: %s", functionName, stringRep);
+            instructionRepresentations.set(index, newRep);
         }
 
         return String.join("\n", instructionRepresentations);

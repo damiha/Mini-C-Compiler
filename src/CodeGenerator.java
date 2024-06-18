@@ -23,15 +23,36 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
     }
 
     // receives an abstract syntax tree
-    public Code generateCode(List<Stmt> statements){
+    public Code generateCode(Program program){
 
         Code code = new Code();
 
-        for(Stmt statement : statements){
-            code.addCode(code(statement));
+        // TODO: change size of global variables later when structs are added
+        int k = 0;
+        for(Stmt.VariableDeclaration varDecl : program.globalDeclarations){
+            code.addCode(code(varDecl));
+            k++;
         }
 
+        // call the main function
+
+        // we first have to move stack pointer not to modify the global variables ( + 1 to reserve for return value)
+        code.addInstruction(new Instr.Alloc(k + 1));
+
+        code.addInstruction(new Instr.Mark());
+
+        code.addInstruction(new Instr.LoadC("main"));
+
+        code.addInstruction(new Instr.Call());
+
+        // destroy all global variables after the main call (first stack cell has return value)
+        code.addInstruction(new Instr.Slide(k));
+
         code.addInstruction(new Instr.Halt());
+
+        for(Stmt.FunctionDeclaration funDecl : program.functionDeclarations){
+            code.addCode(code(funDecl));
+        }
 
         return code;
     }
@@ -146,6 +167,41 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
         if(mode == GenerationMode.R){
             code.addInstruction(new Instr.Load());
         }
+
+        return code;
+    }
+
+    @Override
+    public Code visitCallExpr(Expr.CallExpr expr, GenerationMode mode) {
+
+        checkNoLValue(mode, "Function evaluation has no l-value");
+
+        Code code = new Code();
+
+        // load the parameters on the stack (left most parameter should be on top)
+        int m = 0;
+        for(Expr parameterExpr : expr.parameterExpressions.reversed()){
+            code.addCode(codeR(parameterExpr));
+
+            // TODO: adjust (we can pass structs and they get copied by value)
+            m++;
+        }
+
+        // the return value sits on top of all parameters
+        // save one spot on the stack for the return value (is exposed after we call slide)
+        // functions with void are assumed to return 0
+        code.addInstruction(new Instr.LoadC(0));
+
+        // this saves the EP and the old frame pointer?
+        code.addInstruction(new Instr.Mark());
+
+        code.addInstruction(new Instr.LoadC(expr.functionName));
+
+        code.addInstruction(new Instr.Call());
+
+        // after return, the return value sits on top of the stack
+        // we need to delete the parameter values to get back to initial configuration
+        code.addInstruction(new Instr.Slide(m));
 
         return code;
     }
@@ -283,6 +339,30 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
         Code code = new Code();
         code.addInstruction(new Instr.Alloc(k));
+
+        return code;
+    }
+
+    @Override
+    public Code visitFunctionDeclaration(Stmt.FunctionDeclaration functionDeclaration) {
+
+        // TODO: process the parameters that are declared
+
+        Code code = new Code();
+        code.registerFunction(functionDeclaration.functionName);
+        code.addCode(code(functionDeclaration.body));
+
+        return code;
+    }
+
+    @Override
+    public Code visitReturnStatement(Stmt.ReturnStatement returnStatement) {
+
+        Code code = returnStatement.expr != null ? codeR(returnStatement.expr) : new Code();
+
+        // TODO: copy topmost stack value to destination of return
+
+        code.addInstruction(new Instr.Return());
 
         return code;
     }
