@@ -46,6 +46,11 @@ public abstract class Instr {
         }
     }
     static class Mul extends Instr{
+
+        @Override
+        public String toString(){
+            return "Mul";
+        }
     }
     static class Store extends Instr{
         @Override
@@ -99,6 +104,21 @@ public abstract class Instr {
         @Override
         public String toString(){
             return "Print";
+        }
+    }
+
+    static class Alloc extends Instr{
+
+        // memory size
+        int k;
+
+        public Alloc(int k){
+            this.k = k;
+        }
+
+        @Override
+        public String toString(){
+            return String.format("Alloc %d", k);
         }
     }
 }

@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
@@ -7,6 +9,13 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
     // points to first free cell (stack allocation)
     int n;
+
+    static Map<String, Integer> dataTypeToSize = new HashMap<>();
+
+    static {
+        dataTypeToSize.put("int", 1);
+        dataTypeToSize.put("int*", 1);
+    }
 
     public CodeGenerator(){
         environment = new Environment();
@@ -92,14 +101,64 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
     }
 
     @Override
+    public Code visitArrayAccessExpr(Expr.ArrayAccessExpr arrayAccessExpr, GenerationMode mode) {
+
+        // base + index * block size
+        Code code = codeL(arrayAccessExpr.arrayExpr);
+
+        String arrayVarName = arrayAccessExpr.arrayExpr.varName;
+
+        int blockSize = dataTypeToSize.get(getBaseType(environment.getType(arrayVarName)));
+        code.addInstruction(new Instr.LoadC(blockSize));
+
+        code.addCode(codeR(arrayAccessExpr.indexExpr));
+
+        code.addInstruction(new Instr.Mul());
+        code.addInstruction(new Instr.Add());
+
+        if(mode == GenerationMode.R){
+            code.addInstruction(new Instr.Load());
+        }
+
+        return code;
+    }
+
+    @Override
+    public Code visitAddressExpr(Expr.AddressExpr expr, GenerationMode mode) {
+
+        checkNoLValue(mode, "address expression (&) has no l -value");
+
+        // gives the l code (the address) of the expression
+        return codeL(expr.expr);
+    }
+
+    @Override
+    public Code visitDeRefExpr(Expr.DeRefExpr expr, GenerationMode mode) {
+
+        // r value is easy, just load the l value
+        // what about l value of a *p ?
+
+        // normally the l-value of the pointer is its address (where the pointer is stored)
+        // with * we dereference it and say, give me the l-value of what the pointer is pointing to
+        // the pointer value is the
+        Code code = codeR(expr.expr);
+
+        if(mode == GenerationMode.R){
+            code.addInstruction(new Instr.Load());
+        }
+
+        return code;
+    }
+
+    @Override
     public Code visitAssignExpr(Expr.AssignExpr assignExpr, GenerationMode mode) {
 
         checkNoLValue(mode, "assignment expression has no l-value");
 
         Code value = codeR(assignExpr.value);
-        Code target = codeL(assignExpr.target);
 
-        value.addCode(target);
+        // if the target has no l-value, the assignment code generation fails
+        value.addCode(codeL(assignExpr.target));
         value.addInstruction(new Instr.Store());
 
         return value;
@@ -198,6 +257,32 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
         code.addCode(code(whileStatement.body));
         code.addInstruction(new Instr.Jump(jumpLabelBeforeCondition));
         jumpOverBody.jumpLabel = code.addJumpLabelAtEnd();
+
+        return code;
+    }
+
+    private String getBaseType(String typeName){
+        if(typeName.endsWith("[]")){
+            return typeName.substring(0, typeName.length() - 2);
+        }
+        return typeName;
+    }
+
+    @Override
+    public Code visitVariableDeclaration(Stmt.VariableDeclaration variableDeclaration) {
+
+        String typeName = variableDeclaration.type;
+
+        int k = variableDeclaration.nElements * dataTypeToSize.get(getBaseType(typeName));
+
+        // n only gets used when new variables are declared
+
+        // variable is saved (starting from address n)
+        environment.define(typeName, variableDeclaration.variableName, n);
+        n += k;
+
+        Code code = new Code();
+        code.addInstruction(new Instr.Alloc(k));
 
         return code;
     }
