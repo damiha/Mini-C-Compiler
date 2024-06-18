@@ -46,6 +46,11 @@ public abstract class Instr {
         }
     }
     static class Mul extends Instr{
+
+        @Override
+        public String toString(){
+            return "Mul";
+        }
     }
     static class Store extends Instr{
         @Override

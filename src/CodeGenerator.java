@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
@@ -7,6 +9,12 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
     // points to first free cell (stack allocation)
     int n;
+
+    static Map<String, Integer> dataTypeToSize = new HashMap<>();
+
+    static {
+        dataTypeToSize.put("int", 1);
+    }
 
     public CodeGenerator(){
         environment = new Environment();
@@ -92,12 +100,43 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
     }
 
     @Override
+    public Code visitArrayAccessExpr(Expr.ArrayAccessExpr arrayAccessExpr, GenerationMode mode) {
+
+        // base + index * block size
+        Code code = codeL(arrayAccessExpr.arrayExpr);
+
+        String arrayVarName = arrayAccessExpr.arrayExpr.varName;
+
+        int blockSize = dataTypeToSize.get(getBaseType(environment.getType(arrayVarName)));
+        code.addInstruction(new Instr.LoadC(blockSize));
+
+        code.addCode(codeR(arrayAccessExpr.indexExpr));
+
+        code.addInstruction(new Instr.Mul());
+        code.addInstruction(new Instr.Add());
+
+        if(mode == GenerationMode.R){
+            code.addInstruction(new Instr.Load());
+        }
+
+        return code;
+    }
+
+    @Override
     public Code visitAssignExpr(Expr.AssignExpr assignExpr, GenerationMode mode) {
 
         checkNoLValue(mode, "assignment expression has no l-value");
 
         Code value = codeR(assignExpr.value);
-        Code target = codeL(assignExpr.target);
+
+        Code target;
+        if(assignExpr.target != null) {
+            target = codeL(assignExpr.target);
+        }
+        else{
+            // is an array access expression
+            target = codeL(assignExpr.arrayTarget);
+        }
 
         value.addCode(target);
         value.addInstruction(new Instr.Store());
@@ -202,15 +241,24 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
         return code;
     }
 
+    private String getBaseType(String typeName){
+        if(typeName.endsWith("[]")){
+            return typeName.substring(0, typeName.length() - 2);
+        }
+        return typeName;
+    }
+
     @Override
     public Code visitVariableDeclaration(Stmt.VariableDeclaration variableDeclaration) {
 
-        int k = variableDeclaration.memorySize;
+        String typeName = variableDeclaration.type;
+
+        int k = variableDeclaration.nElements * dataTypeToSize.get(getBaseType(typeName));
 
         // n only gets used when new variables are declared
 
         // variable is saved (starting from address n)
-        environment.define(variableDeclaration.variableName, n);
+        environment.define(typeName, variableDeclaration.variableName, n);
         n += k;
 
         Code code = new Code();

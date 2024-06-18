@@ -3,17 +3,24 @@ import java.util.Map;
 
 public class Environment {
 
-    Map<String, Integer> map;
+    Map<String, Integer> nameToAddress;
+    Map<String, String> nameToType;
 
     public Environment(){
-        map = new HashMap<>();
+        nameToAddress = new HashMap<>();
+        nameToType = new HashMap<>();
     }
 
-    public int getAddress(String var){
-        return map.get(var);
+    public int getAddress(String varName){
+        return nameToAddress.get(varName);
     }
 
-    public void define(String var, int i){
-        map.put(var, i);
+    public String getType(String varName){
+        return nameToType.get(varName);
+    }
+
+    public void define(String type, String varName, int i){
+        nameToAddress.put(varName, i);
+        nameToType.put(varName, type);
     }
 }

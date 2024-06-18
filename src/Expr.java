@@ -31,12 +31,20 @@ public abstract class Expr {
     }
 
     static class AssignExpr extends Expr{
-        VariableExpr target;
-        Expr value;
+        final VariableExpr target;
+        final Expr value;
+        final ArrayAccessExpr arrayTarget;
 
         public AssignExpr(VariableExpr target, Expr value){
             this.target = target;
             this.value = value;
+            arrayTarget = null;
+        }
+
+        public AssignExpr(ArrayAccessExpr arrayAccessExpr, Expr value){
+            this.arrayTarget = arrayAccessExpr;
+            this.value = value;
+            target = null;
         }
 
         @Override
@@ -57,10 +65,28 @@ public abstract class Expr {
             return visitor.visitVariableExpr(this, mode);
         }
     }
+
+    static class ArrayAccessExpr extends Expr{
+
+        VariableExpr arrayExpr;
+        Expr indexExpr;
+
+        public ArrayAccessExpr(VariableExpr arrayExpr, Expr indexExpr){
+            this.arrayExpr = arrayExpr;
+            this.indexExpr = indexExpr;
+        }
+
+
+        @Override
+        <T> T accept(Visitor<T> visitor, GenerationMode mode) {
+            return visitor.visitArrayAccessExpr(this, mode);
+        }
+    }
     interface Visitor<T>{
         T visitLiteral(Literal literal, GenerationMode mode);
         T visitBinary(BinOp binOp, GenerationMode mode);
         T visitAssignExpr(AssignExpr assignExpr, GenerationMode mode);
         T visitVariableExpr(VariableExpr variableExpr, GenerationMode mode);
+        T visitArrayAccessExpr(ArrayAccessExpr arrayAccessExpr, GenerationMode mode);
     }
 }

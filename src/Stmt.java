@@ -34,17 +34,26 @@ public abstract class Stmt {
     // if the memory size is bigger than one, we have
     static class VariableDeclaration extends Stmt{
 
-        int memorySize;
+
         String variableName;
 
-        public VariableDeclaration(String variableName){
+        // can be int[] or int or name of a struct
+        String type;
+        int nElements;
+
+        public VariableDeclaration(String type, String variableName){
+            this.type = type;
             this.variableName = variableName;
-            memorySize = 1;
+            nElements = 1;
         }
 
-        public VariableDeclaration(String variableName, int memorySize){
-            this(variableName);
-            this.memorySize = memorySize;
+        public VariableDeclaration(String type, String variableName, int nElements){
+            this(type, variableName);
+            this.nElements = nElements;
+
+            if(nElements > 1 && !type.endsWith("[]")){
+                throw new RuntimeException("Non-array type can't have more than one element");
+            }
         }
 
         @Override
