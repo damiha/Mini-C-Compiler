@@ -1,0 +1,65 @@
+Alloc 1
+LoadC 42
+LoadC 0
+Store
+Pop
+LoadC 0
+Mark
+LoadC 'main'
+Call
+Slide 1
+Halt
+main: LoadC 5
+LoadC 0
+Mark
+LoadC 'factorial'
+Call
+Slide 1
+Print
+LoadC 0
+Load
+Print
+LoadC 'done with main'
+Print
+LoadC 0
+LoadRC -3
+Store
+Return
+factorial: LoadRC -4
+Load
+LoadC 1
+LessOrEqual
+JumpZ 0
+LoadC 1
+LoadRC -3
+Store
+Return
+Jump 1
+0: Alloc 1
+LoadRC -4
+Load
+LoadRC -4
+Load
+LoadC -1
+Add
+LoadC 0
+Mark
+LoadC 'factorial'
+Call
+Slide 1
+Mul
+LoadRC 1
+Store
+Pop
+LoadC 0
+Load
+Print
+LoadRC 1
+Load
+LoadRC -3
+Store
+Return
+1: LoadC 0
+LoadRC -3
+Store
+Return
