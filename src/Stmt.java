@@ -43,10 +43,19 @@ public abstract class Stmt {
         String type;
         int nElements;
 
+        Expr initializer;
+
         public VariableDeclaration(String type, String variableName){
             this.type = type;
             this.variableName = variableName;
             nElements = 1;
+        }
+
+        // other constructor is for arrays
+        // can't be an array and have an initializer at the same time
+        public VariableDeclaration(String type, String variableName, Expr initializer){
+            this(type, variableName);
+            this.initializer = initializer;
         }
 
         public VariableDeclaration(String type, String variableName, int nElements){

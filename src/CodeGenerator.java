@@ -345,6 +345,7 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
     public Code visitVariableDeclaration(Stmt.VariableDeclaration variableDeclaration) {
 
         String typeName = variableDeclaration.type;
+        String varName = variableDeclaration.variableName;
 
         int k = variableDeclaration.nElements * dataTypeToSize.get(getBaseType(typeName));
 
@@ -352,17 +353,24 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
         // variable is saved (starting from address n)
         if(insideFunction){
-            environment.define(typeName, variableDeclaration.variableName, Visibility.L, l);
+            environment.define(typeName, varName, Visibility.L, l);
             l += k;
         }
         else{
             // global variable
-            environment.define(typeName, variableDeclaration.variableName, Visibility.G, n);
+            environment.define(typeName, varName, Visibility.G, n);
             n += k;
         }
 
         Code code = new Code();
         code.addInstruction(new Instr.Alloc(k));
+
+        if(variableDeclaration.initializer != null){
+
+            code.addCode(code(
+                    new Stmt.ExpressionStatement(new Expr.AssignExpr(new Expr.VariableExpr(varName), variableDeclaration.initializer))
+            ));
+        }
 
         return code;
     }
