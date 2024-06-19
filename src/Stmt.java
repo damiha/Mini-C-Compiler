@@ -1,4 +1,5 @@
 import java.util.List;
+import java.util.ArrayList;
 
 public abstract class Stmt {
 
@@ -21,7 +22,9 @@ public abstract class Stmt {
         List<Stmt> statements;
 
         public BlockStatement(List<Stmt> statements){
-            this.statements = statements;
+
+            // make all lists mutable
+            this.statements = new ArrayList<>(statements);
         }
 
 
@@ -31,7 +34,6 @@ public abstract class Stmt {
         }
     }
 
-    // if the memory size is bigger than one, we have
     static class VariableDeclaration extends Stmt{
 
 
@@ -41,10 +43,19 @@ public abstract class Stmt {
         String type;
         int nElements;
 
+        Expr initializer;
+
         public VariableDeclaration(String type, String variableName){
             this.type = type;
             this.variableName = variableName;
             nElements = 1;
+        }
+
+        // other constructor is for arrays
+        // can't be an array and have an initializer at the same time
+        public VariableDeclaration(String type, String variableName, Expr initializer){
+            this(type, variableName);
+            this.initializer = initializer;
         }
 
         public VariableDeclaration(String type, String variableName, int nElements){
@@ -59,6 +70,31 @@ public abstract class Stmt {
         @Override
         <T> T accept(Visitor<T> visitor) {
             return visitor.visitVariableDeclaration(this);
+        }
+    }
+
+    static class FunctionDeclaration extends Stmt{
+
+        String returnType;
+        String functionName;
+        List<VariableDeclaration> parameters;
+        BlockStatement body;
+
+        public FunctionDeclaration(String returnType, String functionName, List<VariableDeclaration> parameters, BlockStatement body){
+            this.returnType = returnType;
+            this.functionName = functionName;
+            this.parameters = parameters;
+            this.body = body;
+
+            // adding one more return statement at the end can't hurt
+            // if there's a return before, this is never reached
+            // if there's no return, we add it and return 0
+            this.body.statements.add(new ReturnStatement(new Expr.Literal(0)));
+        }
+
+        @Override
+        <T> T accept(Visitor<T> visitor) {
+            return visitor.visitFunctionDeclaration(this);
         }
     }
 
@@ -115,6 +151,20 @@ public abstract class Stmt {
         }
     }
 
+    static class ReturnStatement extends Stmt{
+
+        Expr expr;
+
+        public ReturnStatement(Expr expr){
+            this.expr = expr;
+        }
+
+        @Override
+        <T> T accept(Visitor<T> visitor) {
+            return visitor.visitReturnStatement(this);
+        }
+    }
+
     public interface Visitor<T>{
         T visitExpressionStatement(ExpressionStatement e);
         T visitIfStatement(IfStatement ifStatement);
@@ -122,5 +172,7 @@ public abstract class Stmt {
         T visitPrintStatement(PrintStatement printStatement);
         T visitWhileStatement(WhileStatement whileStatement);
         T visitVariableDeclaration(VariableDeclaration variableDeclaration);
+        T visitFunctionDeclaration(FunctionDeclaration functionDeclaration);
+        T visitReturnStatement(ReturnStatement returnStatement);
     }
 }

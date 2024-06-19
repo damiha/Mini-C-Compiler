@@ -10,10 +10,15 @@ public class VirtualMachine {
     Object[] stack;
     Instr[] codeStore;
     Map<Integer, Integer> jumpTable;
+    Map<String, Integer> functionTable;
 
     Instr instructionRegister;
 
     int stackPointer;
+
+    // TODO: use the extreme pointer to detect stack overflows!
+    int extremePointer;
+    int framePointer;
     int programCounter;
 
     boolean isRunning;
@@ -28,11 +33,16 @@ public class VirtualMachine {
     private void init(Code code){
 
         jumpTable = code.jumpTable;
+        functionTable = code.functionNamesToCodeStart;
+
         Instr[] instructionsArray = code.instructions.toArray(new Instr[0]);
 
         System.arraycopy(instructionsArray, 0, codeStore, 0, instructionsArray.length);
-        stackPointer = 0;
+        stackPointer = -1;
+        framePointer = -1;
+        extremePointer = -1;
         programCounter = 0;
+
         isRunning = true;
     }
 
@@ -53,12 +63,62 @@ public class VirtualMachine {
     private void execute(Instr instruction){
         if(instruction instanceof Instr.Halt){
             isRunning = false;
+
+            // return value from main
+            System.out.printf("VM: exited with code %s\n", stack[0]);
         }
         else if(instruction instanceof Instr.JumpZ){
             if((Integer)stack[stackPointer] == 0){
                 programCounter = jumpTable.get(((Instr.JumpZ) instruction).jumpLabel);
                 stackPointer--;
             }
+        }
+        else if(instruction instanceof Instr.Mark){
+            // stack pointer currently points to cell reserved for the return value
+            stack[stackPointer + 1] = extremePointer;
+
+            // old frame pointer to return stack frame
+            stack[stackPointer + 2] = framePointer;
+
+            stackPointer += 2;
+        }
+        else if(instruction instanceof Instr.Call){
+            // the name of the function lies on the topmost stack value
+            int oldPC = programCounter;
+
+            String functionName = (String)stack[stackPointer];
+
+            programCounter = functionTable.get(functionName);
+
+            // the name of the function gets consumed and the old program counter gets stored there
+            stack[stackPointer] = oldPC;
+            framePointer = stackPointer;
+        }
+        else if(instruction instanceof Instr.Return){
+
+            // point to return  value
+            stackPointer = framePointer - 3;
+
+            programCounter = (Integer)stack[framePointer];
+            extremePointer = (Integer)(stack[framePointer - 2]);
+            framePointer = (Integer)stack[framePointer - 1];
+        }
+        else if(instruction instanceof Instr.Slide){
+
+            int m = ((Instr.Slide)instruction).m;
+
+            if(stackPointer < m){
+                throw new RuntimeException("Slide m and m > size of stack.");
+            }
+
+            stack[stackPointer - m] = stack[stackPointer];
+            stackPointer = stackPointer - m;
+        }
+        else if(instruction instanceof Instr.LoadRC){
+            int relativeAddress = ((Instr.LoadRC)instruction).j;
+            int absoluteAddress = relativeAddress + framePointer;
+            stackPointer++;
+            stack[stackPointer] = absoluteAddress;
         }
         else if(instruction instanceof Instr.Alloc){
             stackPointer += ((Instr.Alloc) instruction).k;
@@ -69,7 +129,7 @@ public class VirtualMachine {
             stackPointer--;
         }
         else if(instruction instanceof Instr.Print){
-            System.out.println(stack[stackPointer]);
+            System.out.printf("VM: %s\n", stack[stackPointer]);
             stackPointer--;
         }
         else if(instruction instanceof Instr.Pop){
@@ -151,8 +211,8 @@ public class VirtualMachine {
 
     @Override
     public String toString(){
-        StringBuilder res = new StringBuilder(String.format("PC: %d, SP: %d\n", programCounter, stackPointer));
-        int nLastToDisplay = 5;
+        StringBuilder res = new StringBuilder(String.format("PC: %d, SP: %d, INSTR: %s\n", programCounter, stackPointer, codeStore[programCounter]));
+        int nLastToDisplay = 20;
 
         for(int i = (nLastToDisplay - 1); i >= 0; i--){
 
