@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -7,8 +6,13 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
     Environment environment;
 
-    // points to first free cell (stack allocation)
+    // points to first free cell (stack allocation) for global variables
     int n;
+
+    // for local variables
+    int l;
+
+    boolean insideFunction = false;
 
     static Map<String, Integer> dataTypeToSize = new HashMap<>();
 
@@ -36,8 +40,8 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
         // call the main function
 
-        // we first have to move stack pointer not to modify the global variables ( + 1 to reserve for return value)
-        code.addInstruction(new Instr.Alloc(k + 1));
+        // reserve space for the return value
+        code.addInstruction(new Instr.LoadC(0));
 
         code.addInstruction(new Instr.Mark());
 
@@ -97,6 +101,9 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
             case BinaryOperator.PLUS:
                 left.addInstruction(new Instr.Add());
                 break;
+            case BinaryOperator.MUL:
+                left.addInstruction(new Instr.Mul());
+                break;
             case BinaryOperator.LESS_EQUAL:
                 left.addInstruction(new Instr.LessOrEqual());
                 break;
@@ -113,12 +120,24 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
     @Override
     public Code visitVariableExpr(Expr.VariableExpr variableExpr, GenerationMode mode) {
 
-        if(mode == GenerationMode.L){
-            return new Code(List.of(new Instr.LoadC(environment.getAddress(variableExpr.varName))));
+        Code code = new Code();
+
+        Pair<Visibility, Integer> p = environment.getVisibilityAndAddress(variableExpr.varName);
+        Visibility v = p.key();
+        Integer address = p.value();
+
+        if(v == Visibility.G){
+            code.addInstruction(new Instr.LoadC(address));
         }
         else{
-            return new Code(List.of(new Instr.LoadC(environment.getAddress(variableExpr.varName)), new Instr.Load()));
+            code.addInstruction(new Instr.LoadRC(address));
         }
+
+        if(mode == GenerationMode.R){
+            code.addInstruction(new Instr.Load());
+        }
+
+        return code;
     }
 
     @Override
@@ -187,9 +206,7 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
             m++;
         }
 
-        // the return value sits on top of all parameters
-        // save one spot on the stack for the return value (is exposed after we call slide)
-        // functions with void are assumed to return 0
+        // for the return value
         code.addInstruction(new Instr.LoadC(0));
 
         // this saves the EP and the old frame pointer?
@@ -334,8 +351,15 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
         // n only gets used when new variables are declared
 
         // variable is saved (starting from address n)
-        environment.define(typeName, variableDeclaration.variableName, n);
-        n += k;
+        if(insideFunction){
+            environment.define(typeName, variableDeclaration.variableName, Visibility.L, l);
+            l += k;
+        }
+        else{
+            // global variable
+            environment.define(typeName, variableDeclaration.variableName, Visibility.G, n);
+            n += k;
+        }
 
         Code code = new Code();
         code.addInstruction(new Instr.Alloc(k));
@@ -346,11 +370,30 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
     @Override
     public Code visitFunctionDeclaration(Stmt.FunctionDeclaration functionDeclaration) {
 
-        // TODO: process the parameters that are declared
-
         Code code = new Code();
         code.registerFunction(functionDeclaration.functionName);
+
+        // only temporarily modify the environment
+        Environment previous = environment;
+
+        // creates a deep copy
+        environment = new Environment(environment);
+
+        // -3 is the return value and our first variable starts below that
+        int loc = -3;
+        for(Stmt.VariableDeclaration decl : functionDeclaration.parameters){
+            loc -= dataTypeToSize.get(decl.type);
+            environment.define(decl.type, decl.variableName, Visibility.L, loc);
+        }
+
+        insideFunction = true;
+        // for variables defined locally (start here because l = 0 is frame pointer)
+        l = 1;
+
         code.addCode(code(functionDeclaration.body));
+
+        insideFunction = false;
+        environment = previous;
 
         return code;
     }
@@ -360,7 +403,9 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
         Code code = returnStatement.expr != null ? codeR(returnStatement.expr) : new Code();
 
-        // TODO: copy topmost stack value to destination of return
+        // this is the destination (FP - 3 = return value)
+        code.addInstruction(new Instr.LoadRC(-3));
+        code.addInstruction(new Instr.Store());
 
         code.addInstruction(new Instr.Return());
 

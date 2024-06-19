@@ -38,10 +38,11 @@ public class VirtualMachine {
         Instr[] instructionsArray = code.instructions.toArray(new Instr[0]);
 
         System.arraycopy(instructionsArray, 0, codeStore, 0, instructionsArray.length);
-        stackPointer = 0;
+        stackPointer = -1;
+        framePointer = -1;
+        extremePointer = -1;
         programCounter = 0;
-        extremePointer = 0;
-        framePointer = 0;
+
         isRunning = true;
     }
 
@@ -62,6 +63,9 @@ public class VirtualMachine {
     private void execute(Instr instruction){
         if(instruction instanceof Instr.Halt){
             isRunning = false;
+
+            // return value from main
+            System.out.printf("VM: exited with code %s\n", stack[0]);
         }
         else if(instruction instanceof Instr.JumpZ){
             if((Integer)stack[stackPointer] == 0){
@@ -110,6 +114,12 @@ public class VirtualMachine {
             stack[stackPointer - m] = stack[stackPointer];
             stackPointer = stackPointer - m;
         }
+        else if(instruction instanceof Instr.LoadRC){
+            int relativeAddress = ((Instr.LoadRC)instruction).j;
+            int absoluteAddress = relativeAddress + framePointer;
+            stackPointer++;
+            stack[stackPointer] = absoluteAddress;
+        }
         else if(instruction instanceof Instr.Alloc){
             stackPointer += ((Instr.Alloc) instruction).k;
         }
@@ -119,7 +129,7 @@ public class VirtualMachine {
             stackPointer--;
         }
         else if(instruction instanceof Instr.Print){
-            System.out.println(stack[stackPointer]);
+            System.out.printf("VM: %s\n", stack[stackPointer]);
             stackPointer--;
         }
         else if(instruction instanceof Instr.Pop){
@@ -202,7 +212,7 @@ public class VirtualMachine {
     @Override
     public String toString(){
         StringBuilder res = new StringBuilder(String.format("PC: %d, SP: %d, INSTR: %s\n", programCounter, stackPointer, codeStore[programCounter]));
-        int nLastToDisplay = 10;
+        int nLastToDisplay = 20;
 
         for(int i = (nLastToDisplay - 1); i >= 0; i--){
 

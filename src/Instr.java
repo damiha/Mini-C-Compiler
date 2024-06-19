@@ -53,6 +53,18 @@ public abstract class Instr {
         }
     }
 
+    static class LoadRC extends Instr {
+
+        int j;
+
+        public LoadRC(int j){
+            this.j = j;
+        }
+        public String toString(){
+            return "LoadRC " + j;
+        }
+    }
+
     static class LoadC extends Instr{
         // object to be loaded into the stack
         Object q;

@@ -3,26 +3,31 @@ import java.util.Map;
 
 public class Environment {
 
-    Map<String, Integer> nameToAddress;
+    Map<String, Pair<Visibility, Integer>> nameToAddress;
     Map<String, String> nameToType;
-    Environment parent;
 
     public Environment(){
         nameToAddress = new HashMap<>();
         nameToType = new HashMap<>();
     }
 
-    public Environment(Environment parent){
+    // creates a deep copy
+    public Environment(Environment env){
+
         this();
-        this.parent = parent;
+
+        for(String varName : env.nameToAddress.keySet()){
+            nameToAddress.put(varName, env.nameToAddress.get(varName));
+            nameToType.put(varName, env.nameToType.get(varName));
+        }
     }
 
-    public int getAddress(String varName){
+    public Pair<Visibility, Integer> getVisibilityAndAddress(String varName){
 
         if(nameToAddress.containsKey(varName)){
             return nameToAddress.get(varName);
         }
-        // TODO
+
         throw new RuntimeException(String.format("Variable %s not found.", varName));
     }
 
@@ -30,8 +35,8 @@ public class Environment {
         return nameToType.get(varName);
     }
 
-    public void define(String type, String varName, int i){
-        nameToAddress.put(varName, i);
+    public void define(String type, String varName, Visibility visibility, int i){
+        nameToAddress.put(varName, new Pair<>(visibility, i));
         nameToType.put(varName, type);
     }
 }

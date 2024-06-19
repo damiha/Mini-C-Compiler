@@ -79,8 +79,8 @@ public abstract class Stmt {
 
             // adding one more return statement at the end can't hurt
             // if there's a return before, this is never reached
-            // if there's no return, we add it
-            this.body.statements.add(new ReturnStatement(null));
+            // if there's no return, we add it and return 0
+            this.body.statements.add(new ReturnStatement(new Expr.Literal(0)));
         }
 
         @Override

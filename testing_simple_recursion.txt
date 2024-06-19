@@ -1,9 +1,4 @@
-import java.util.List;
-
-public class Main {
-    public static void main(String[] args) {
-
-        Stmt.FunctionDeclaration factorialDef = new Stmt.FunctionDeclaration("int", "factorial",
+Stmt.FunctionDeclaration factorialDef = new Stmt.FunctionDeclaration("int", "factorial",
                 List.of(
                         new Stmt.VariableDeclaration("int", "n")
                 ), new Stmt.BlockStatement(
@@ -28,17 +23,3 @@ public class Main {
         )));
 
         Program program = new Program(List.of(), List.of(mainDef, factorialDef));
-
-        CodeGenerator codeGenerator = new CodeGenerator();
-
-        Code code = codeGenerator.generateCode(program);
-
-        System.out.println(code);
-
-        VirtualMachine vm = new VirtualMachine();
-
-        vm.execute(code);
-
-        //System.out.println(vm);
-    }
-}
