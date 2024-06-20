@@ -154,6 +154,8 @@ public class Lexer {
             }
         }
 
+        tokens.add(new Token(line, TokenType.EOF, "", null));
+
         return tokens;
     }
 

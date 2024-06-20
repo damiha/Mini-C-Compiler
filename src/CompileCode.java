@@ -7,7 +7,7 @@ public class CompileCode {
 
     public static void main(String[] args) {
 
-        String filePath = "factorial.c";
+        String filePath = "pointers.c";
 
         String source = getSource(filePath);
 
@@ -20,7 +20,11 @@ public class CompileCode {
             System.out.println(token);
         }
 
-        // Parser, Code generator
+        // Parser
+        Parser parser = new Parser(tokens);
+
+        Program program = parser.parse();
+        // Code generator
     }
 
     public static String getSource(String filePath) {

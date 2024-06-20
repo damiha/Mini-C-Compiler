@@ -224,6 +224,19 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
     }
 
     @Override
+    public Code visitNegatedExpr(Expr.NegatedExpr expr, GenerationMode mode) {
+
+        checkNoLValue(mode, "negated expression (!) has no l-value");
+
+        Code code = new Code();
+
+        code.addCode(codeR(expr.expr));
+        code.addInstruction(new Instr.Neg());
+
+        return code;
+    }
+
+    @Override
     public Code visitAssignExpr(Expr.AssignExpr assignExpr, GenerationMode mode) {
 
         checkNoLValue(mode, "assignment expression has no l-value");

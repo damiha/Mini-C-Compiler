@@ -132,6 +132,11 @@ public abstract class Instr {
         }
     }
 
+    static class Neg extends Instr{
+        @Override
+        public String toString(){ return "Neg"; }
+    }
+
     static class JumpZ extends Instr{
 
         int jumpLabel;
