@@ -93,6 +93,13 @@ public abstract class Instr {
         }
     }
 
+    static class Less extends Instr{
+        @Override
+        public String toString(){
+            return "Less";
+        }
+    }
+
     static class LessOrEqual extends Instr{
         @Override
         public String toString(){
@@ -105,6 +112,28 @@ public abstract class Instr {
             return "Equal";
         }
     }
+
+    static class UnEqual extends Instr{
+        @Override
+        public String toString(){
+            return "UnEqual";
+        }
+    }
+
+    static class GreaterOrEqual extends Instr{
+        @Override
+        public String toString(){
+            return "GreaterOrEqual";
+        }
+    }
+
+    static class Greater extends Instr{
+        @Override
+        public String toString(){
+            return "Greater";
+        }
+    }
+
     static class Mul extends Instr{
 
         @Override
@@ -132,9 +161,57 @@ public abstract class Instr {
         }
     }
 
+    // for booleans
     static class Neg extends Instr{
         @Override
         public String toString(){ return "Neg"; }
+    }
+
+    static class FlipSign extends Instr{
+        @Override
+        public String toString(){
+            return "FlipSign";
+        }
+    }
+
+    static class Sub extends Instr{
+
+        @Override
+        public String toString(){
+            return "Sub";
+        }
+    }
+
+    static class And extends Instr{
+
+        @Override
+        public String toString(){
+            return "And";
+        }
+    }
+
+    static class Or extends Instr{
+
+        @Override
+        public String toString(){
+            return "Or";
+        }
+    }
+
+    static class Mod extends Instr{
+
+        @Override
+        public String toString(){
+            return "Mod";
+        }
+    }
+
+    static class Div extends Instr{
+
+        @Override
+        public String toString(){
+            return "Div";
+        }
     }
 
     static class JumpZ extends Instr{

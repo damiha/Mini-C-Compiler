@@ -7,7 +7,7 @@ public class CompileCode {
 
     public static void main(String[] args) {
 
-        String filePath = "pointers.c";
+        String filePath = "primes.c";
 
         String source = getSource(filePath);
 
@@ -16,15 +16,21 @@ public class CompileCode {
 
         List<Token> tokens = lexer.getTokens();
 
-        for(Token token : tokens){
-            System.out.println(token);
-        }
-
         // Parser
         Parser parser = new Parser(tokens);
 
         Program program = parser.parse();
+
         // Code generator
+        CodeGenerator codeGenerator = new CodeGenerator();
+
+        Code code = codeGenerator.generateCode(program);
+
+        // strip away the .c at the end
+        String rawName = filePath.substring(0, filePath.length() - 2);
+        String outputPath = rawName + ".cma";
+
+        code.saveToFile(outputPath);
     }
 
     public static String getSource(String filePath) {

@@ -1,3 +1,4 @@
+import java.sql.SQLOutput;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,14 +102,41 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
             case BinaryOperator.PLUS:
                 left.addInstruction(new Instr.Add());
                 break;
+            case BinaryOperator.MINUS:
+                left.addInstruction(new Instr.Sub());
+                break;
             case BinaryOperator.MUL:
                 left.addInstruction(new Instr.Mul());
+                break;
+            case BinaryOperator.DIV:
+                left.addInstruction(new Instr.Div());
+                break;
+            case BinaryOperator.MOD:
+                left.addInstruction(new Instr.Mod());
+                break;
+            case BinaryOperator.LESS:
+                left.addInstruction(new Instr.Less());
                 break;
             case BinaryOperator.LESS_EQUAL:
                 left.addInstruction(new Instr.LessOrEqual());
                 break;
             case BinaryOperator.EQUAL:
                 left.addInstruction(new Instr.Equal());
+                break;
+            case BinaryOperator.UNEQUAL:
+                left.addInstruction(new Instr.UnEqual());
+                break;
+            case BinaryOperator.GREATER_EQUAL:
+                left.addInstruction(new Instr.GreaterOrEqual());
+                break;
+            case BinaryOperator.GREATER:
+                left.addInstruction(new Instr.Greater());
+                break;
+            case BinaryOperator.AND:
+                left.addInstruction(new Instr.And());
+                break;
+            case BinaryOperator.OR:
+                left.addInstruction(new Instr.Or());
                 break;
             default:
                 throw new RuntimeException("Unknown operator");
@@ -232,6 +260,18 @@ public class CodeGenerator implements Expr.Visitor<Code>, Stmt.Visitor<Code>{
 
         code.addCode(codeR(expr.expr));
         code.addInstruction(new Instr.Neg());
+
+        return code;
+    }
+
+    @Override
+    public Code visitUnaryMinusExpr(Expr.UnaryMinusExpr expr, GenerationMode mode) {
+
+        checkNoLValue(mode, "unary minus expression has no l-value");
+
+        Code code = new Code();
+        code.addCode(codeR(expr.expr));
+        code.addInstruction(new Instr.FlipSign());
 
         return code;
     }
