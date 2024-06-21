@@ -1,0 +1,93 @@
+LoadC 0
+Mark
+LoadC 'main'
+Call
+Slide 0
+Halt
+isPrime: LoadRC -4
+Load
+LoadC 1
+LessOrEqual
+JumpZ 0
+LoadC 0
+LoadRC -3
+Store
+Return
+0: Alloc 1
+LoadC 2
+LoadRC 1
+Store
+Pop
+1: LoadRC 1
+Load
+LoadRC -4
+Load
+Less
+JumpZ 3
+LoadRC -4
+Load
+LoadRC 1
+Load
+Mod
+LoadC 0
+Equal
+JumpZ 2
+LoadC 0
+LoadRC -3
+Store
+Return
+2: LoadRC 1
+Load
+LoadC 1
+Add
+LoadRC 1
+Store
+Pop
+Jump 1
+3: LoadC 1
+LoadRC -3
+Store
+Return
+LoadC 0
+LoadRC -3
+Store
+Return
+main: Alloc 1
+LoadC 2
+LoadRC 1
+Store
+Pop
+Alloc 1
+LoadC 100
+LoadRC 2
+Store
+Pop
+4: LoadRC 1
+Load
+LoadRC 2
+Load
+Less
+JumpZ 6
+LoadRC 1
+Load
+LoadC 0
+Mark
+LoadC 'isPrime'
+Call
+Slide 1
+JumpZ 5
+LoadRC 1
+Load
+Print
+5: LoadRC 1
+Load
+LoadC 1
+Add
+LoadRC 1
+Store
+Pop
+Jump 4
+6: LoadC 0
+LoadRC -3
+Store
+Return

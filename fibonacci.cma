@@ -1,0 +1,79 @@
+LoadC 0
+Mark
+LoadC 'main'
+Call
+Slide 0
+Halt
+main: Alloc 20
+LoadC 0
+LoadRC 1
+LoadC 1
+LoadC 0
+Mul
+Add
+Store
+Pop
+LoadC 1
+LoadRC 1
+LoadC 1
+LoadC 1
+Mul
+Add
+Store
+Pop
+Alloc 1
+LoadC 2
+LoadRC 21
+Store
+Pop
+0: LoadRC 21
+Load
+LoadC 20
+Less
+JumpZ 1
+LoadRC 1
+LoadC 1
+LoadRC 21
+Load
+LoadC 1
+Sub
+Mul
+Add
+Load
+LoadRC 1
+LoadC 1
+LoadRC 21
+Load
+LoadC 2
+Sub
+Mul
+Add
+Load
+Add
+LoadRC 1
+LoadC 1
+LoadRC 21
+Load
+Mul
+Add
+Store
+Pop
+LoadRC 21
+Load
+LoadC 1
+Add
+LoadRC 21
+Store
+Pop
+Jump 0
+1: LoadRC 1
+LoadC 1
+LoadC 19
+Mul
+Add
+Load
+Print
+LoadC 0
+LoadRC -3
+Store
+Return

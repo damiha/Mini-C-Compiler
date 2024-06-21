@@ -1,0 +1,133 @@
+LoadC 0
+Mark
+LoadC 'main'
+Call
+Slide 0
+Halt
+main: LoadC 'unary minus and negation'
+Print
+LoadC 3
+FlipSign
+LoadC 4
+Less
+Print
+LoadC 3
+FlipSign
+LoadC 3
+FlipSign
+Less
+Print
+LoadC 3
+FlipSign
+LoadC 3
+FlipSign
+Less
+Neg
+Print
+LoadC 'arithmetic'
+Print
+LoadC 100
+LoadC 25
+Add
+Print
+LoadC 100
+LoadC 25
+Sub
+Print
+LoadC 100
+LoadC 25
+Mul
+Print
+LoadC 100
+LoadC 25
+Div
+Print
+LoadC 100
+LoadC 25
+Mod
+Print
+LoadC 'or'
+Print
+LoadC 0
+LoadC 10
+Or
+Print
+LoadC 0
+LoadC 1
+FlipSign
+Or
+Print
+LoadC 1
+LoadC 1
+FlipSign
+Or
+Print
+LoadC 0
+LoadC 0
+Or
+Print
+LoadC 'and'
+Print
+LoadC 0
+LoadC 0
+And
+Print
+LoadC 1
+LoadC 0
+And
+Print
+LoadC 0
+LoadC 1
+And
+Print
+LoadC 1
+FlipSign
+LoadC 1
+And
+Print
+LoadC 'ordering relations'
+Print
+LoadC 3
+LoadC 5
+Less
+Print
+LoadC 3
+LoadC 3
+Less
+Print
+LoadC 3
+LoadC 3
+LessOrEqual
+Print
+LoadC 3
+LoadC 2
+LessOrEqual
+Print
+LoadC 4
+LoadC 4
+Equal
+Print
+LoadC 4
+LoadC 5
+Equal
+Print
+LoadC 5
+LoadC 4
+Greater
+Print
+LoadC 4
+LoadC 4
+Greater
+Print
+LoadC 5
+LoadC 5
+GreaterOrEqual
+Print
+LoadC 5
+LoadC 10
+GreaterOrEqual
+Print
+LoadC 0
+LoadRC -3
+Store
+Return

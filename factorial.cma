@@ -1,0 +1,47 @@
+LoadC 0
+Mark
+LoadC 'main'
+Call
+Slide 0
+Halt
+main: LoadC '5! is'
+Print
+LoadC 5
+LoadC 0
+Mark
+LoadC 'factorial'
+Call
+Slide 1
+Print
+LoadC 0
+LoadRC -3
+Store
+Return
+factorial: LoadRC -4
+Load
+LoadC 1
+LessOrEqual
+JumpZ 0
+LoadC 1
+LoadRC -3
+Store
+Return
+0: LoadRC -4
+Load
+LoadRC -4
+Load
+LoadC 1
+Sub
+LoadC 0
+Mark
+LoadC 'factorial'
+Call
+Slide 1
+Mul
+LoadRC -3
+Store
+Return
+LoadC 0
+LoadRC -3
+Store
+Return
