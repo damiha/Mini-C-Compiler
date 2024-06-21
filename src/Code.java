@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.lang.reflect.Constructor;
+import java.util.Set;
+import java.util.HashSet;
 
 public class Code {
 
@@ -11,6 +13,8 @@ public class Code {
     Map<Integer, Integer> jumpTable;
 
     Map<String, Integer> functionNamesToCodeStart;
+
+    boolean printMerges = false;
 
     static List<Class<? extends Instr>> classes = new ArrayList<>();
 
@@ -23,10 +27,31 @@ public class Code {
         classes.add(Instr.Slide.class);
         classes.add(Instr.LoadRC.class);
         classes.add(Instr.LoadC.class);
-        classes.add(Instr.Add.class);
+
+        // binary
+
+        classes.add(Instr.Less.class);
         classes.add(Instr.LessOrEqual.class);
+        classes.add(Instr.Greater.class);
         classes.add(Instr.Equal.class);
+        classes.add(Instr.UnEqual.class);
+        classes.add(Instr.GreaterOrEqual.class);
+
+        classes.add(Instr.Add.class);
+        classes.add(Instr.Sub.class);
         classes.add(Instr.Mul.class);
+        classes.add(Instr.Div.class);
+        classes.add(Instr.Mod.class);
+
+        classes.add(Instr.Or.class);
+        classes.add(Instr.And.class);
+
+
+        // unary
+        classes.add(Instr.FlipSign.class);
+        classes.add(Instr.Neg.class);
+
+
         classes.add(Instr.Store.class);
         classes.add(Instr.Pop.class);
         classes.add(Instr.Load.class);
@@ -188,38 +213,78 @@ public class Code {
         return jumpLabel;
     }
 
+    private void printJumpTable(Map<Integer, Integer> table){
+        for(Integer k : table.keySet()){
+            System.out.println(String.format("%d --> %d", k, table.get(k)));
+        }
+    }
+
     public void registerFunction(String functionName){
         int indexOfEnd = instructions.size();
 
         functionNamesToCodeStart.put(functionName, indexOfEnd);
     }
 
-    public void addCode(Code codeAfter){
+    public Map<Integer, Integer> mergeJumpTables(Map<Integer, Integer> first,
+                                                 Map<Integer, Integer> second, List<Instr> instructionsAfter){
 
-        // merge jump tables
+        if(second.isEmpty()){
+            return first;
+        }
+
+        Map<Integer, Integer> merged = new HashMap<>(first);
+
+        if(printMerges) {
+            System.out.println("--- MERGE THOSE ---");
+            printJumpTable(first);
+            System.out.println("---");
+            printJumpTable(second);
+        }
 
         int offset = instructions.size();
-        int jumpLabelOffset = jumpTable.size();
+        int jumpLabelOffset = first.size();
 
-        for(Integer jumpLabel : codeAfter.jumpTable.keySet()){
+        // keep that for which jump instructions the labels where swapped out
+        // needed because we modify them and iterate over them at the same time
+        // if we don't keep track, we could run into multiple unwanted substitutions
+        Set<Instr> alreadySubstituted = new HashSet<>();
+
+        for(Integer jumpLabel : second.keySet()){
 
             int newJumpLabel = jumpLabelOffset + jumpLabel;
-            int newDestination = offset + codeAfter.jumpTable.get(jumpLabel);
+            int newDestination = offset + second.get(jumpLabel);
 
             // replace old jump label in code that is appended
             // only replace jump labels which match with old ones
-            for(Instr instr : codeAfter.instructions){
+            for(Instr instr : instructionsAfter){
 
-                if(instr instanceof Instr.JumpZ && ((Instr.JumpZ) instr).jumpLabel == jumpLabel){
+                if(instr instanceof Instr.JumpZ && ((Instr.JumpZ) instr).jumpLabel == jumpLabel && !alreadySubstituted.contains(instr)){
                     ((Instr.JumpZ) instr).jumpLabel = newJumpLabel;
+                    alreadySubstituted.add(instr);
                 }
-                else if (instr instanceof Instr.Jump && ((Instr.Jump) instr).jumpLabel == jumpLabel){
+                else if (instr instanceof Instr.Jump && ((Instr.Jump) instr).jumpLabel == jumpLabel && !alreadySubstituted.contains(instr)){
                     ((Instr.Jump) instr).jumpLabel = newJumpLabel;
+                    alreadySubstituted.add(instr);
                 }
             }
 
-            jumpTable.put(newJumpLabel, newDestination);
+            merged.put(newJumpLabel, newDestination);
         }
+
+        if(printMerges){
+            System.out.println("--- MERGED ---");
+            printJumpTable(merged);
+            System.out.println("---");
+        }
+
+        return merged;
+    }
+
+    public void addCode(Code codeAfter){
+
+        jumpTable = mergeJumpTables(jumpTable, codeAfter.jumpTable, codeAfter.instructions);
+
+        int offset = instructions.size();
 
         // merge function jump tables
         for(String functionName : codeAfter.functionNamesToCodeStart.keySet()){

@@ -52,6 +52,7 @@ public class VirtualMachine {
 
         while(isRunning){
             instructionRegister = codeStore[programCounter++];
+
             execute(instructionRegister);
 
             if(debugPrintActivated) {
@@ -116,6 +117,7 @@ public class VirtualMachine {
         }
         else if(instruction instanceof Instr.LoadRC){
             int relativeAddress = ((Instr.LoadRC)instruction).j;
+
             int absoluteAddress = relativeAddress + framePointer;
             stackPointer++;
             stack[stackPointer] = absoluteAddress;
@@ -150,10 +152,67 @@ public class VirtualMachine {
             Integer addressToLoadFrom = (Integer)stack[stackPointer];
             stack[stackPointer] = stack[addressToLoadFrom];
         }
+        else if(instruction instanceof Instr.FlipSign){
+            stack[stackPointer] = -((Integer)stack[stackPointer]);
+        }
+        else if(instruction instanceof Instr.Neg){
+            int stackValue = ((Integer)stack[stackPointer]);
+            stack[stackPointer] = stackValue == 0 ? 1 : 0;
+        }
         else if(instruction instanceof Instr.Add){
             executeBinaryOperation((o1, o2) -> {
                 if(o1 instanceof Integer && o2 instanceof Integer){
                     return ((Integer)o1) + ((Integer)o2);
+                }
+
+                throw new RuntimeException("Add doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.Div){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return ((Integer)o1) / ((Integer)o2);
+                }
+
+                throw new RuntimeException("Div doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.Greater){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return ((Integer)o1) > ((Integer)o2) ? 1 : 0;
+                }
+
+                throw new RuntimeException("Greater doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.GreaterOrEqual){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return ((Integer)o1) >= ((Integer)o2) ? 1 : 0;
+                }
+
+                throw new RuntimeException("GreaterOrEqual doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.And){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+
+                    int notNormalizedValue = ((Integer)o1) * ((Integer)o2);
+                    return notNormalizedValue == 0 ? 0 : 1;
+                }
+
+                throw new RuntimeException("Add doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.Or){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+
+                    int o1Val = ((Integer)o1);
+                    int o2Val = ((Integer)o2);
+                    return ((o1Val != 0) || (o2Val != 0)) ? 1 : 0;
                 }
 
                 throw new RuntimeException("Add doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
@@ -186,6 +245,43 @@ public class VirtualMachine {
                 throw new RuntimeException("Mul doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
             });
         }
+        else if(instruction instanceof Instr.Sub){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return ((Integer)o1) - ((Integer)o2);
+                }
+
+                throw new RuntimeException("Sub doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.Mod){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return ((Integer)o1) % ((Integer)o2);
+                }
+
+                throw new RuntimeException("Mod doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.Less){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return ((Integer)o1) < ((Integer)o2) ? 1 : 0;
+                }
+
+                throw new RuntimeException("Less doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+        else if(instruction instanceof Instr.UnEqual){
+            executeBinaryOperation((o1, o2) -> {
+                if(o1 instanceof Integer && o2 instanceof Integer){
+                    return !((Integer) o1).equals((Integer) o2) ? 1 : 0;
+                }
+
+                throw new RuntimeException("Less doesn't support combination (" + o1.getClass().getName() + ", " + o2.getClass().getName() + ")");
+            });
+        }
+
         else if(instruction instanceof Instr.Store){
             // first is address
             // below is value
@@ -212,6 +308,7 @@ public class VirtualMachine {
     @Override
     public String toString(){
         StringBuilder res = new StringBuilder(String.format("PC: %d, SP: %d, INSTR: %s\n", programCounter, stackPointer, codeStore[programCounter]));
+        res.append("STACK: ");
         int nLastToDisplay = 20;
 
         for(int i = (nLastToDisplay - 1); i >= 0; i--){
@@ -220,6 +317,15 @@ public class VirtualMachine {
                 continue;
 
             res.append("| ").append(stack[stackPointer - i]);
+        }
+
+        // if we are not in the base frame, print as well
+        if(framePointer >= 0) {
+            res.append("\nFRAME: ");
+
+            for (int i = framePointer + 1; i <= stackPointer; i++) {
+                res.append("| ").append(stack[i]);
+            }
         }
 
         return res.append("\n").toString();

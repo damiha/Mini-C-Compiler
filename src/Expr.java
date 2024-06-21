@@ -47,6 +47,20 @@ public abstract class Expr {
         }
     }
 
+    // the ! operator
+    static class NegatedExpr extends Expr{
+        final Expr expr;
+
+        public NegatedExpr(Expr expr){
+            this.expr = expr;
+        }
+
+        @Override
+        <T> T accept(Visitor<T> visitor, GenerationMode mode) {
+            return visitor.visitNegatedExpr(this, mode);
+        }
+    }
+
     // C's & operator
     static class AddressExpr extends Expr{
         final Expr expr;
@@ -107,6 +121,20 @@ public abstract class Expr {
         }
     }
 
+    static class UnaryMinusExpr extends Expr{
+        Expr expr;
+
+        public UnaryMinusExpr(Expr expr){
+            this.expr = expr;
+        }
+
+
+        @Override
+        <T> T accept(Visitor<T> visitor, GenerationMode mode) {
+            return visitor.visitUnaryMinusExpr(this, mode);
+        }
+    }
+
     static class ArrayAccessExpr extends Expr{
 
         VariableExpr arrayExpr;
@@ -132,5 +160,7 @@ public abstract class Expr {
         T visitAddressExpr(AddressExpr expr, GenerationMode mode);
         T visitDeRefExpr(DeRefExpr expr, GenerationMode mode);
         T visitCallExpr(CallExpr expr, GenerationMode mode);
+        T visitNegatedExpr(NegatedExpr expr, GenerationMode mode);
+        T visitUnaryMinusExpr(UnaryMinusExpr expr, GenerationMode mode);
     }
 }

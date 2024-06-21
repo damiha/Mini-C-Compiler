@@ -2,7 +2,7 @@ public class RunCode {
 
     public static void main(String[] args) {
 
-        String fileName = "sample_program.cma";
+        String fileName = "primes.cma";
 
         Code code = new Code(fileName);
 
