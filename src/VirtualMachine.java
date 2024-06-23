@@ -71,8 +71,10 @@ public class VirtualMachine {
         else if(instruction instanceof Instr.JumpZ){
             if((Integer)stack[stackPointer] == 0){
                 programCounter = jumpTable.get(((Instr.JumpZ) instruction).jumpLabel);
-                stackPointer--;
+
             }
+            // condition value needs to be consumed even if it is not met
+            stackPointer--;
         }
         else if(instruction instanceof Instr.Mark){
             // stack pointer currently points to cell reserved for the return value
@@ -128,7 +130,6 @@ public class VirtualMachine {
         // unconditional jump
         else if(instruction instanceof Instr.Jump){
             programCounter = jumpTable.get(((Instr.Jump) instruction).jumpLabel);
-            stackPointer--;
         }
         else if(instruction instanceof Instr.Print){
             System.out.printf("VM: %s\n", stack[stackPointer]);
